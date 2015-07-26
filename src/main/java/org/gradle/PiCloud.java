@@ -1,6 +1,11 @@
 package org.gradle;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -10,12 +15,63 @@ import java.io.Writer;
 
 import it.sauronsoftware.cron4j.Scheduler;
 
-
 /**
  * @author jfjclarke
  * @date 25.07.14
  */
 public class PiCloud {
+
+	private PiConfig config;
+
+	public PiCloud() {
+		try {
+			config = getConfig();
+			runProgram();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void runProgram() {
+		Scheduler s = new Scheduler();
+		s.schedule("* * * * *", new Runnable() {
+			public void run() throws Exception {
+				executeCommand(config.getRSyncCommand());
+			}
+		});
+		// Starts the scheduler.
+		s.start();
+	}
+
+	/**
+	 * 
+	 * @return the config for this system in PiConfig Object
+	 */
+	private PiConfig getConfig() throws FileNotFoundException,IOException{
+		String home = System.getProperty("user.home");
+		File file = new File(home + "/PiCloud/.config");
+
+		FileInputStream fis = null;
+		BufferedInputStream bis = null;
+		DataInputStream dis = null;
+
+		fis = new FileInputStream(file);
+		bis = new BufferedInputStream(fis);
+		dis = new DataInputStream(bis);
+
+		PiConfig config = null; 
+		while (dis.available() != 0) {
+			config = new PiConfig(dis.readLine(), dis.readLine(), dis.readLine(), dis.readLine(), dis.readLine());
+		}
+
+		fis.close();
+		bis.close();
+		dis.close();
+
+		return config;
+	}
 
 	/**
 	 * 
@@ -23,39 +79,20 @@ public class PiCloud {
 	 * @param waitForResponse
 	 * @return the response of the command
 	 */
-	public static String executeCommand(String command, boolean waitForResponse) {
+	private String executeCommand(String command) throws Exception {
 		String response = "";
 		ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
+		
 		pb.redirectErrorStream(true);
-		System.out.println("Linux command: " + command);
+		Process shell = pb.start();
 
-		try {
-			Process shell = pb.start();
-			if (waitForResponse) {
+		// To capture output from the shell
+		InputStream shellIn = shell.getInputStream();
 
-				// To capture output from the shell
-				InputStream shellIn = shell.getInputStream();
-
-				// Wait for the shell to finish and get the return code
-				int shellExitStatus = shell.waitFor();
-				System.out.println("Exit status" + shellExitStatus);
-
-				response = convertStreamToStr(shellIn);
-
-				shellIn.close();
-			}
-
-		}
-		catch (IOException e) {
-			System.out.println("Error occured while executing Linux command. Error Description: "
-					+ e.getMessage());
-		}
-
-		catch (InterruptedException e) {
-			System.out.println("Error occured while executing Linux command. Error Description: "
-					+ e.getMessage());
-		}
-
+		// Wait for the shell to finish and get the return code
+		int shellExitStatus = shell.waitFor();
+		response = convertStreamToStr(shellIn);
+		shellIn.close();
 		return response;
 	}
 
@@ -65,7 +102,7 @@ public class PiCloud {
 	 * there's no more data to read. We use the StringWriter class to
 	 * produce the string.
 	 */
-	public static String convertStreamToStr(InputStream is) throws IOException {
+	private String convertStreamToStr(InputStream is) throws IOException {
 
 		if (is != null) {
 			Writer writer = new StringWriter();
@@ -88,17 +125,7 @@ public class PiCloud {
 		}
 	}
 
-
 	public static void main(String[] args) {
-		Scheduler s = new Scheduler();
-		s.schedule("* * * * *", new Runnable() {
-			public void run() {
-				String home = System.getProperty("user.home");
-				String responce = executeCommand("rsync -avz -e 'ssh -p7339' pi@192.168.0.118:rsyncTest/ " +  home + "/rsyncTest/", true);
-				System.out.println(responce);
-			}
-		});
-		// Starts the scheduler.
-		s.start();
+		new PiCloud();
 	}
 }
