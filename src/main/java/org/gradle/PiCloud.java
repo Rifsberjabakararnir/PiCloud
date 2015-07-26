@@ -27,6 +27,7 @@ public class PiCloud {
 		try {
 			config = getConfig();
 			runProgram();
+			//compress();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -38,7 +39,9 @@ public class PiCloud {
 		Scheduler s = new Scheduler();
 		s.schedule("* * * * *", new Runnable() {
 			public void run() {
-				executeCommand(config.getRSyncCommand());
+				System.out.println(config.getRSyncCommand());
+//				String response = executeCommand(config.getRSyncCommand());
+//				System.out.println(response);
 			}
 		});
 		// Starts the scheduler.
@@ -83,14 +86,14 @@ public class PiCloud {
 	private String executeCommand(String command) {
 		String response = "";
 		ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
-		
+
 		pb.redirectErrorStream(true);
 		Process shell;
 		try {
 			shell = pb.start();
 			// To capture output from the shell
 			InputStream shellIn = shell.getInputStream();
-			
+
 			// Wait for the shell to finish and get the return code
 			shell.waitFor();
 			response = convertStreamToStr(shellIn);

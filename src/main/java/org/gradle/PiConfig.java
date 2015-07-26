@@ -10,7 +10,7 @@ public class PiConfig {
 	
 	public PiConfig( String localDir, String remoteDir, String userName, String ip, String port ){
 		
-		this.localDir = localDir;
+		this.localDir = System.getProperty("user.home") + "/" + localDir;
 		this.remoteDir = remoteDir;
 		this.userName = userName;
 		this.ip = ip;
@@ -22,6 +22,6 @@ public class PiConfig {
 	 * @return the rSync command with information from config file
 	 */
 	public String getRSyncCommand(){
-		return "rsync -avz -e 'ssh -p" + port + "' " + userName + "@" + ip + ":" + remoteDir + " " + localDir;
+		return "rsync -avz  " + localDir + " -e 'ssh -p" + port + "' " + userName + "@" + ip + ":" + remoteDir;
 	}
 }
