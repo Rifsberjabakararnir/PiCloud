@@ -37,7 +37,7 @@ public class PiCloud {
 	private void runProgram() {
 		Scheduler s = new Scheduler();
 		s.schedule("* * * * *", new Runnable() {
-			public void run() throws Exception {
+			public void run() {
 				executeCommand(config.getRSyncCommand());
 			}
 		});
@@ -49,6 +49,7 @@ public class PiCloud {
 	 * 
 	 * @return the config for this system in PiConfig Object
 	 */
+	@SuppressWarnings("deprecation")
 	private PiConfig getConfig() throws FileNotFoundException,IOException{
 		String home = System.getProperty("user.home");
 		File file = new File(home + "/PiCloud/.config");
@@ -79,20 +80,29 @@ public class PiCloud {
 	 * @param waitForResponse
 	 * @return the response of the command
 	 */
-	private String executeCommand(String command) throws Exception {
+	private String executeCommand(String command) {
 		String response = "";
 		ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
 		
 		pb.redirectErrorStream(true);
-		Process shell = pb.start();
+		Process shell;
+		try {
+			shell = pb.start();
+			// To capture output from the shell
+			InputStream shellIn = shell.getInputStream();
+			
+			// Wait for the shell to finish and get the return code
+			shell.waitFor();
+			response = convertStreamToStr(shellIn);
+			shellIn.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
-		// To capture output from the shell
-		InputStream shellIn = shell.getInputStream();
-
-		// Wait for the shell to finish and get the return code
-		int shellExitStatus = shell.waitFor();
-		response = convertStreamToStr(shellIn);
-		shellIn.close();
 		return response;
 	}
 
