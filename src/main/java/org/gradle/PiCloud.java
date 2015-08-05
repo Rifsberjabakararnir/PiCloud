@@ -1,17 +1,19 @@
 package org.gradle;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import it.sauronsoftware.cron4j.Scheduler;
 
@@ -27,7 +29,6 @@ public class PiCloud {
 		try {
 			config = getConfig();
 			runProgram();
-			//compress();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -39,9 +40,8 @@ public class PiCloud {
 		Scheduler s = new Scheduler();
 		s.schedule("* * * * *", new Runnable() {
 			public void run() {
-				System.out.println(config.getRSyncCommand());
-//				String response = executeCommand(config.getRSyncCommand());
-//				System.out.println(response);
+				//				System.out.println(config.getRSyncCommand());
+				executeCommand(config.getRSyncCommands());
 			}
 		});
 		// Starts the scheduler.
@@ -52,27 +52,27 @@ public class PiCloud {
 	 * 
 	 * @return the config for this system in PiConfig Object
 	 */
-	@SuppressWarnings("deprecation")
 	private PiConfig getConfig() throws FileNotFoundException,IOException{
 		String home = System.getProperty("user.home");
-		File file = new File(home + "/PiCloud/.config");
+		File file = new File(home + "/PiCloud/config.json");
 
-		FileInputStream fis = null;
-		BufferedInputStream bis = null;
-		DataInputStream dis = null;
+		JSONParser parser = new JSONParser();
+		try {
 
-		fis = new FileInputStream(file);
-		bis = new BufferedInputStream(fis);
-		dis = new DataInputStream(bis);
+			Object obj = parser.parse(new FileReader(file));
+			JSONObject jsonObject = (JSONObject) obj;
 
-		PiConfig config = null; 
-		while (dis.available() != 0) {
-			config = new PiConfig(dis.readLine(), dis.readLine(), dis.readLine(), dis.readLine(), dis.readLine());
+			config = new PiConfig( (String) jsonObject.get("localDir"), (String) jsonObject.get("remoteDir"), 
+					(String) jsonObject.get("userName"), (String) jsonObject.get("ip"), 
+					(String) jsonObject.get("port") );
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
 		}
-
-		fis.close();
-		bis.close();
-		dis.close();
 
 		return config;
 	}
@@ -83,30 +83,32 @@ public class PiCloud {
 	 * @param waitForResponse
 	 * @return the response of the command
 	 */
-	private String executeCommand(String command) {
-		String response = "";
-		ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
+	private void executeCommand(String[] command) {
+		for(int i = 0; i < command.length; i++) {
 
-		pb.redirectErrorStream(true);
-		Process shell;
-		try {
-			shell = pb.start();
-			// To capture output from the shell
-			InputStream shellIn = shell.getInputStream();
+			String response = "";
+			ProcessBuilder pb = new ProcessBuilder("bash", "-c", command[0]);
 
-			// Wait for the shell to finish and get the return code
-			shell.waitFor();
-			response = convertStreamToStr(shellIn);
-			shellIn.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			pb.redirectErrorStream(true);
+			Process shell;
+			try {
+				shell = pb.start();
+				// To capture output from the shell
+				InputStream shellIn = shell.getInputStream();
+
+				// Wait for the shell to finish and get the return code
+				shell.waitFor();
+				response = convertStreamToStr(shellIn);
+				System.out.println(response);
+				shellIn.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-
-		return response;
 	}
 
 	/**
@@ -139,6 +141,6 @@ public class PiCloud {
 	}
 
 	public static void main(String[] args) {
-		new PiCloud();
+		new PiCloud();		
 	}
 }
