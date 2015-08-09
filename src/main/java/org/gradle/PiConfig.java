@@ -10,8 +10,8 @@ public class PiConfig {
 
 	public PiConfig( String localDir, String remoteDir, String userName, String ip, String port ){
 
-		this.localDir = System.getProperty("user.home") + "/" + localDir;
-		this.remoteDir = remoteDir;
+		this.localDir = localDir;
+		this.remoteDir = System.getProperty("user.home") + "/" + remoteDir;
 		this.userName = userName;
 		this.ip = ip;
 		this.port = port;
@@ -30,9 +30,8 @@ public class PiConfig {
 		//rsync 
 
 		String[] commands = {
-				"sqlite3 /var/www/owncloud/data/owncloud.db .dump > /var/www/owncloud/data/owncloud-sqlbkp.bak",
-				"rsync -Aaxz  " + localDir + " -e 'ssh -p" + port + "' " + userName + "@" + ip + ":" + remoteDir,
-				""
+				//"sqlite3 /var/www/owncloud/data/owncloud.db .dump > /var/www/owncloud/data/owncloud-sqlbkp.bak",
+				"rsync -Aaxz  " + localDir + " -e 'ssh -p" + port + "' " + userName + "@" + ip + ":" + remoteDir
 		};
 		return commands;
 
