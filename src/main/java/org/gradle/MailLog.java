@@ -11,7 +11,7 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
-public class SendLog {
+public class MailLog {
 
     private static String USER_NAME = "picloudlogger";
     private static String PASSWORD = "rifsberjabakari87";
@@ -19,7 +19,7 @@ public class SendLog {
 
     private String[] log;
     
-    public SendLog( String[] log ) {
+    public MailLog( String[] log ) {
     	this.log = log;
     	String subject = "PiCloud log " + new Date(); 
     	sendFromGMail(USER_NAME, PASSWORD, RECIPIENTS, subject);
@@ -76,6 +76,6 @@ public class SendLog {
     public static void main(String[] args) {
     	String[] arr = {"testmessage", "line2", "line3"};
     	@SuppressWarnings("unused")
-		SendLog log = new SendLog(arr);
+		MailLog log = new MailLog(arr);
     }
 }
