@@ -2,16 +2,18 @@ package org.gradle;
 
 public class PiConfig {
 
+	public final String serverDir;
 	public final String localDir;
 	public final String remoteDir;
 	public final String userName;
 	public final String ip;
 	public final String port;
 
-	public PiConfig( String localDir, String remoteDir, String userName, String ip, String port ){
+	public PiConfig( String serverDir, String localDir, String remoteDir, String userName, String ip, String port ){
 
+		this.serverDir = serverDir;
 		this.localDir = localDir;
-		this.remoteDir = System.getProperty("user.home") + "/" + remoteDir;
+		this.remoteDir = remoteDir;
 		this.userName = userName;
 		this.ip = ip;
 		this.port = port;
@@ -22,16 +24,11 @@ public class PiConfig {
 	 * @return the rSync command with information from config file
 	 */
 	public String[] getRSyncCommands(){
-		//		return "rsync -Aaxz  " + localDir + " -e 'ssh -p" + port + "' " + userName + "@" + ip + ":" + remoteDir;
-
-
-		//rsync -Aaxz owncloud/ owncloud-dirbkp_`date +"%Y%m%d"`/
-		//sqlite3 data/owncloud.db .dump > owncloud-sqlbkp_`date +"%Y%m%d"`.bak
-		//rsync 
-
 		String[] commands = {
-				//"sqlite3 /var/www/owncloud/data/owncloud.db .dump > /var/www/owncloud/data/owncloud-sqlbkp.bak",
-				"rsync -Aaxz  " + localDir + " -e 'ssh -p" + port + "' " + userName + "@" + ip + ":" + remoteDir
+				"pwd",
+				"sqlite3 /var/www/owncloud/data/owncloud.db .dump > /var/www/owncloud/data/owncloud-sqlbkp.bak",
+				"rsync -Aaxz  " + localDir + "/data/" + " -e 'ssh -p" + port + "' " + userName + "@" + ip + ":" + remoteDir,
+				"rsync -Aaxz  " + serverDir + "/owncloud/config" + " -e 'ssh -p" + port + "' " + userName + "@" + ip + ":" + remoteDir
 		};
 		return commands;
 

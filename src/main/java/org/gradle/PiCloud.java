@@ -27,7 +27,7 @@ public class PiCloud {
 
 	public PiCloud() {
 		try {
-			config = getConfig();
+			config = getConfig();			
 			runProgram();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -40,7 +40,6 @@ public class PiCloud {
 		Scheduler s = new Scheduler();
 		s.schedule("* * * * *", new Runnable() {
 			public void run() {
-				//				System.out.println(config.getRSyncCommand());
 				executeCommand(config.getRSyncCommands());
 			}
 		});
@@ -62,9 +61,9 @@ public class PiCloud {
 			Object obj = parser.parse(new FileReader(file));
 			JSONObject jsonObject = (JSONObject) obj;
 
-			config = new PiConfig( (String) jsonObject.get("localDir"), (String) jsonObject.get("remoteDir"), 
-					(String) jsonObject.get("userName"), (String) jsonObject.get("ip"), 
-					(String) jsonObject.get("port") );
+			config = new PiConfig( (String) jsonObject.get("serverDir"), (String) jsonObject.get("localDir"), 
+					(String) jsonObject.get("remoteDir"), (String) jsonObject.get("userName"), 
+					(String) jsonObject.get("ip"), (String) jsonObject.get("port") );
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -83,11 +82,11 @@ public class PiCloud {
 	 * @param waitForResponse
 	 * @return the response of the command
 	 */
-	private void executeCommand(String[] command) {
+	private void executeCommand(String... command) {
 		for(int i = 0; i < command.length; i++) {
-
+			System.out.println(command[i]);
 			String response = "";
-			ProcessBuilder pb = new ProcessBuilder("bash", "-c", command[0]);
+			ProcessBuilder pb = new ProcessBuilder("bash", "-c", command[i]);
 
 			pb.redirectErrorStream(true);
 			Process shell;
