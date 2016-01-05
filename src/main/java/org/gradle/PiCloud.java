@@ -38,9 +38,13 @@ public class PiCloud {
 
 	private void runProgram() {
 		Scheduler s = new Scheduler();
-		s.schedule("* * * * *", new Runnable() {
+		s.schedule("30 * * * *", new Runnable() {
 			public void run() {
-				executeCommand(config.getRSyncCommands());
+				try {
+					executeCommand(config.getRSyncCommands());
+				} catch (Exception e) {
+					new MailLog(e.toString());
+				}
 			}
 		});
 		// Starts the scheduler.
@@ -81,8 +85,10 @@ public class PiCloud {
 	 * @param command - the command to execute
 	 * @param waitForResponse
 	 * @return the response of the command
+	 * @throws IOException 
+	 * @throws InterruptedException 
 	 */
-	private void executeCommand(String... command) {
+	private void executeCommand(String... command) throws IOException, InterruptedException {
 		for(int i = 0; i < command.length; i++) {
 			System.out.println(command[i]);
 			String response = "";
@@ -90,23 +96,15 @@ public class PiCloud {
 
 			pb.redirectErrorStream(true);
 			Process shell;
-			try {
-				shell = pb.start();
-				// To capture output from the shell
-				InputStream shellIn = shell.getInputStream();
+			shell = pb.start();
+			// To capture output from the shell
+			InputStream shellIn = shell.getInputStream();
 
-				// Wait for the shell to finish and get the return code
-				shell.waitFor();
-				response = convertStreamToStr(shellIn);
-				System.out.println(response);
-				shellIn.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			// Wait for the shell to finish and get the return code
+			shell.waitFor();
+			response = convertStreamToStr(shellIn);
+			System.out.println(response);
+			shellIn.close();
 		}
 	}
 
@@ -117,7 +115,6 @@ public class PiCloud {
 	 * produce the string.
 	 */
 	private String convertStreamToStr(InputStream is) throws IOException {
-
 		if (is != null) {
 			Writer writer = new StringWriter();
 
